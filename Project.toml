@@ -1,0 +1,13 @@
+name = "LargeN"
+uuid = "00c0e18a-d63a-4c8e-bbe6-b34667ceda92"
+authors = ["niggeni <niggeni@zedat.fu-berlin.de>"]
+version = "0.1.0"
+
+[deps]
+Brillouin = "23470ee3-d0df-4052-8b1a-8cbd6363e7f0"
+Crystalline = "ae5e2be0-a263-11e9-351e-f94dad1eb351"
+Cubature = "667455a9-e2ce-5579-9412-b964f529a492"
+LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
+QuadGK = "1fd47b50-473d-5c70-9696-f719f8f3bcdc"
+Roots = "f2b01f46-fcfa-551c-844a-d8ac1e96c665"
+StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
