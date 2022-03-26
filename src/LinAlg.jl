@@ -19,9 +19,9 @@ function X_q_eig(nb::Integer,β::Real,J̃::AbstractMatrix,λ::Real)
     evals, evecs = eigen(J̃)
     sum = 0.
     for alpha in eachindex(evals),beta in eachindex(evals),gamma in eachindex(evals)
-        sum += (evecs[beta,alpha] *conj(evecs[beta,alpha] ))/(β*evals[beta] + λ)
+        sum += (evecs[alpha,beta] *conj(evecs[gamma,beta] ))/(β*evals[beta] + λ)
     end
-    return sum/nb
+    return real(sum/nb)
 end
 
 function constraint(J̃::Function,λ::Real,β::Real,d::Integer)
@@ -29,20 +29,20 @@ function constraint(J̃::Function,λ::Real,β::Real,d::Integer)
     return 1/(2pi)^d * BZIntegral(f,d) -1
 end
 
-function optimizeConstraint(J̃::Function,β::Real,d::Integer)
+function optimizeConstraint(J̃::Function,β::Real,d::Integer;min = 2*β+0.01, max=2*β+10 )
     f(λ) = constraint(J̃,λ,β,d)
-    find_zero(f,1)
+    find_zero(f,(min,max))
 end
 
-function optimizeConstraint_brute(J̃::Function,β::Real,d::Integer,max,length=1000)
-    lamRange = LinRange(0,max,length)
+function optimizeConstraint_brute(J̃::Function,β::Real,d::Integer;min = 2*β+0.01, max=2*β+10 ,length=5000)
+    lamRange = LinRange(min,max,length)
+    # lam = LinRange(1.2*beta,1.3*beta,50000)
+
     f(λ) = constraint(J̃,λ,β,d)
-    constr_arr = f.(lamRange)
-    const2 = abs.(constr_arr)
-    ind = argmin(const2)
-    # println((ind, constr_arr[ind]))
-    # println(const2)
-    return lamRange[ind]
+    cons = f.(lamRange)
+    filter!(isfinite,cons)
+    # cons = L.constraint.(Ref(J̃),lamRange,Ref(β),d)
+    Lam2 = lamRange[argmin(abs.(cons))]
 end
 
 
