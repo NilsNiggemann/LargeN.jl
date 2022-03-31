@@ -47,21 +47,34 @@ precomputeJ(System::Geometry,Basis::Basis_Struct,pairToInequiv::Function) = prec
 
 precomputeJ(System::Geometry,Mod::Module) = precomputeJ(System,Mod.Basis,Mod.pairToInequiv)
 
-function constructJ(Infos::FourierInfo)
+function constructJ(Infos::FourierInfo,::Val{NCell}) where NCell
 
     @unpack Rij_vec,Jij_vec,alpha_vec,beta_vec = Infos
-    NCell = maximum(alpha_vec)
-    function J_func(q)
-        J = zeros(ComplexF64,NCell,NCell)
-        @inbounds for (Rij,Jij,α,β) in zip(Rij_vec,Jij_vec,alpha_vec,beta_vec)
-            if α <= β
-                J[α,β] += exp(1im*dot(q,Rij))*Jij
-            end
+
+    upperinds = findall(i -> alpha_vec[i] < beta_vec[i],collect(eachindex(alpha_vec,beta_vec)))
+    diaginds = findall(i -> alpha_vec[i] == beta_vec[i],collect(eachindex(alpha_vec,beta_vec)))
+    
+    
+    @inline function J_func(q)
+        # J = zeros(ComplexF64,NCell,NCell)
+        # @inbounds for (Rij,Jij,α,β) in zip(Rij_vec,Jij_vec,alpha_vec,beta_vec)
+        J = MMatrix{NCell,NCell,ComplexF64,NCell*NCell}(undef)
+        fill!(J,0. +0im)
+        @inbounds for i in upperinds
+            α = alpha_vec[i]
+            β = beta_vec[i]
+            J[α,β] += exp(1im*dot(q,Rij_vec[i]))*Jij_vec[i]
+        end
+        @inbounds for i in diaginds
+            α = alpha_vec[i]
+            J[α,α] += cos(dot(q,Rij_vec[i]))*Jij_vec[i] 
         end
         return Hermitian(J)
     end
     return J_func
 end
+
+constructJ(Infos::FourierInfo) = constructJ(Infos,Val(maximum(Infos.alpha_vec)))
 
 function constructJtest(Infos::FourierInfo)
 

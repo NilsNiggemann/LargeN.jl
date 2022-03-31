@@ -4,8 +4,6 @@ authors = ["niggeni <niggeni@zedat.fu-berlin.de>"]
 version = "0.1.0"
 
 [deps]
-Brillouin = "23470ee3-d0df-4052-8b1a-8cbd6363e7f0"
-Crystalline = "ae5e2be0-a263-11e9-351e-f94dad1eb351"
 Cubature = "667455a9-e2ce-5579-9412-b964f529a492"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 Parameters = "d96e819e-fc66-5662-9728-84c9c7592b0a"
