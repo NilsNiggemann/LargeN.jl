@@ -174,7 +174,7 @@ function getEvals(JFunc,BZextent = 4pi;kEvals = 20)
     EV= evalFunc(JFunc,kEvals,BZextent)
 end
 
-function getChiFunction(T,Sys::Geometry,Mod::Module,BZextent = 4pi;kEvals = 20,singularShift = 1e-12, guess = (0.2/T,40/T),tol = 1e-7,verbose = true)
+function getChiFunction(T,Sys::Geometry,Mod::Module,BZextent = 4pi;kEvals = 20,singularShift = 1e-12, guess = (0.2/T,70/T),tol = 1e-7,verbose = true)
     JFunc = constructJ(Sys,Mod)
     EV = getEvals(JFunc,BZextent,kEvals = kEvals)
     beta = 1 /T
