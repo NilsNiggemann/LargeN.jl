@@ -174,27 +174,28 @@ function getEvals(JFunc,BZextent = 4pi;kEvals = 20)
     EV= evalFunc(JFunc,kEvals,BZextent)
 end
 
-function getChiFunction(T,Sys::Geometry,Mod::Module,BZextent = 4pi;kEvals = 20,singularShift = 1e-12, guess = (0.2/T,40/T),tol = 1e-7)
+function getChiFunction(T,Sys::Geometry,Mod::Module,BZextent = 4pi;kEvals = 20,singularShift = 1e-12, guess = (0.2/T,40/T),tol = 1e-7,verbose = true)
     JFunc = constructJ(Sys,Mod)
     EV = getEvals(JFunc,BZextent,kEvals = kEvals)
     beta = 1 /T
     LamSing = last(sort(optimizeSingularConstraint(EV,T,guess=guess)))+ singularShift
     Lam = LamSing
-    @info "looking to the right of singularity at $LamSing"
+    verbose && @info "looking to the right of singularity at $LamSing"
     try
         Lam = optimizeConstraint(EV,T,guess=[LamSing,LamSing+5]) + singularShift
     catch
-        @warn "constraint could not be optimized! Lambda set to singularity"
+        verbose && @warn "constraint could not be optimized! Lambda set to singularity"
     end
 
     cons = constraint(EV,Lam,T)
     consright = constraint(EV,Lam+0.001*beta,T)
     dev = abs(cons - consright)
+    if verbose
     @info "constraint minmized to $cons for Λ = $Lam"
-    if abs(cons) > tol || dev > 10
-        @warn "constraint possibly not converged! (constraint tolerance set to $tol, fluctuation is $dev)"
+        if abs(cons) > tol || dev > 10
+            @warn "constraint possibly not converged! (constraint tolerance set to $tol, fluctuation is $dev)"
+        end
     end
-
     function chi(q)
         X_q(beta,JFunc(q),Lam)
     end
