@@ -119,7 +119,8 @@ function getChiFunction(T,Sys::Geometry,Mod::Module;BZextent = 4pi,nk = 20,tol =
     end
 
     if abs(cons) > tol
-        @warn "constraint possibly not converged! (constraint tolerance set to $tol)"
+        @warn "T= $T: constraint possibly not converged!
+        constraint value: $cons \t tolerance: $tol"
     end
 
     @inline chi(q)= X_q(T,JFunc(q),Lam)
