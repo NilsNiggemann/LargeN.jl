@@ -80,6 +80,12 @@ uuid = "f43a241f-c20a-4ad4-852c-f6b1247861c6"
 deps = ["Random"]
 uuid = "9fa8497b-333b-5362-9e8d-4d0656e87820"
 
+[[GenericSchur]]
+deps = ["LinearAlgebra", "Printf"]
+git-tree-sha1 = "9f4933bbb357fd52d77ecf3bb1c4dc39d3710c80"
+uuid = "c145ed77-6b09-5dd9-b285-bf645a82121e"
+version = "0.5.2"
+
 [[InteractiveUtils]]
 deps = ["Markdown"]
 uuid = "b77e0a4c-d291-57a0-90e8-8db25a27a240"

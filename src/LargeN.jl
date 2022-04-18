@@ -1,5 +1,5 @@
 module LargeN
-    using LinearAlgebra,StaticArrays,Roots,Test,SpinFRGLattices,Parameters
+    using LinearAlgebra,StaticArrays,Roots,Test,SpinFRGLattices,Parameters,GenericSchur
     using Cubature,StaticArrays
     include("LinAlg.jl")
     include("Lattices.jl")

@@ -2,9 +2,9 @@
 getDim(B::Basis_Struct_2D) = 2
 getDim(B::Basis_Struct_3D) = 3
 
-function precomputeJ(couplings::AbstractVector,UnitCell::AbstractVector{T},SiteList::AbstractVector{T},PairList::AbstractVector{T},PairTypes,pairToInequiv,Basis) where T <: Rvec
-    Rij_vec = SVector{getDim(Basis),Float64}[]
-    Jij_vec = Float64[]
+function precomputeJ(couplings::AbstractVector{FloatType},UnitCell::AbstractVector{T},SiteList::AbstractVector{T},PairList::AbstractVector{T},PairTypes,pairToInequiv,Basis) where {T <: Rvec, FloatType <: AbstractFloat}
+    Rij_vec = SVector{getDim(Basis),FloatType}[]
+    Jij_vec = FloatType[]
     alpha_vec = Int[]
     beta_vec = Int[]
 
@@ -18,7 +18,7 @@ function precomputeJ(couplings::AbstractVector,UnitCell::AbstractVector{T},SiteL
             xi = getSiteType(R_Ref,Basis)
             pair = MapToPair(xi,ij,PairList,PairTypes)
             if pair !== 0
-                if abs(couplings[pair]) > 1e-15 
+                if abs(couplings[pair]) > eps(FloatType) 
                     α = i_site.b
                     β = j_site.b
                     push!(Rij_vec,Rij)
@@ -32,9 +32,9 @@ function precomputeJ(couplings::AbstractVector,UnitCell::AbstractVector{T},SiteL
     return FourierInfo(Rij_vec,Jij_vec,alpha_vec,beta_vec)
 end
 
-struct FourierInfo1{B}
+struct FourierInfo1{B,T}
     Rij_vec::Vector{B}
-    Jij_vec::Vector{Float64}
+    Jij_vec::Vector{T}
     alpha_vec::Vector{Int}
     beta_vec::Vector{Int}
 end
@@ -47,7 +47,7 @@ precomputeJ(System::Geometry,Basis::Basis_Struct,pairToInequiv::Function) = prec
 
 precomputeJ(System::Geometry,Mod::Module) = precomputeJ(System,Mod.Basis,Mod.pairToInequiv)
 
-function constructJ(Infos::FourierInfo,::Val{NCell}) where NCell
+function constructJ(Infos::FourierInfo{B,T},::Val{NCell}) where {B,T,NCell}
 
     @unpack Rij_vec,Jij_vec,alpha_vec,beta_vec = Infos
 
@@ -58,7 +58,7 @@ function constructJ(Infos::FourierInfo,::Val{NCell}) where NCell
     @inline function J_func(q)
         # J = zeros(ComplexF64,NCell,NCell)
         # @inbounds for (Rij,Jij,α,β) in zip(Rij_vec,Jij_vec,alpha_vec,beta_vec)
-        J = MMatrix{NCell,NCell,ComplexF64,NCell*NCell}(undef)
+        J = MMatrix{NCell,NCell,Complex{T},NCell*NCell}(undef)
         fill!(J,0. +0im)
         @inbounds for i in upperinds
             α = alpha_vec[i]
@@ -97,6 +97,7 @@ function constructJtest(Infos::FourierInfo)
 end
 
 constructJ(System::Geometry,Mod::Module) = constructJ(precomputeJ(System,Mod))
+constructJ(System::Geometry,Basis::Basis_Struct,pairToInequiv::Function) = constructJ(precomputeJ(System,Basis,pairToInequiv))
 constructJtest(System::Geometry,Mod::Module) = constructJtest(precomputeJ(System,Mod))
 
 function getDimfromFunc(Jfunc::Function)
