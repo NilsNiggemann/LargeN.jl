@@ -50,13 +50,12 @@ function zeroTweight(J̃::AbstractMatrix)
     evals, evecs = eigen(J̃)
     Emin = minimum(evals)
     minEnergies = findall(x -> isapprox(x,Emin,atol = 1e-12),evals)
-    # degeneracy = length(filter(x -> isapprox(x,evals[minIndex],atol = 1e-12),evals))
-    # @assert degeneracy == 1 ""
-    sum = zero(eltype(evecs))
-    for alpha in eachindex(evals),beta in minEnergies, gamma in eachindex(evals)
-        sum += evecs[alpha,beta] *conj(evecs[gamma,beta])
+
+    weight = zero(real(eltype(evecs)))
+    for beta in minEnergies
+        @views weight += abs2(sum(evecs[:,beta]))
     end
-    real(sum)
+    weight
 end
 
 function ComputeEig2D(Jfunc::Function,nk::Integer;ext = 2pi,min = -ext,max = ext)
