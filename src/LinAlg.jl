@@ -175,10 +175,18 @@ function getChiFunction(T,Sys::Geometry,Basis::Basis_Struct,pairToInequiv::Funct
         constraint value: $cons \t tolerance: $tol"
     end
 
-    @inline chi(q)= X_q(T,JFunc(q),Lam)
+    @inline chi(q::AbstractVector)= X_q(T,JFunc(q),Lam)
+    @inline chi(q...)= X_q(T,JFunc(SVector(q)),Lam)
 
     return chi
 end
 getChiFunction(T,Sys::Geometry,Mod::Module;kwargs...) = getChiFunction(T,Sys,Mod.Basis,Mod.pairToInequiv;kwargs...)
+
+function getZeroTChi(Sys::Geometry,Basis::Basis_Struct,pairToInequiv::Function)
+    JFunc = constructJ(Sys,Basis,pairToInequiv)
+    chi(x::AbstractVector) = zeroTweight(JFunc(x))
+    chi(x...) = zeroTweight(JFunc(SVector(x)))
+end
+getZeroTChi(Sys::Geometry,Mod::Module) = getZeroTChi(Sys,Mod.Basis,Mod.pairToInequiv)
 
 ##

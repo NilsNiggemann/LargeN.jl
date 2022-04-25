@@ -5,5 +5,5 @@ module LargeN
     include("Lattices.jl")
     include("UnitTests.jl")
     
-    export constraint,X_q,optimizeConstraint,X_q_eig,precomputeJ,constructJ,constructJtest, getEvals, getChiFunction
+    export constraint,X_q,optimizeConstraint,X_q_eig,precomputeJ,constructJ,constructJtest, getEvals, getChiFunction,getZeroTChi
 end
