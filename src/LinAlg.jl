@@ -23,7 +23,7 @@ function X_q(T::Real,J̃::AbstractMatrix,λ::Real,nb::Integer = getNCell(J̃))
 end
 
 function constraint(J̃::Function,λ::Real,T::Real,BZextent::Real,d::Integer = getDimfromFunc(J̃);kwargs...)
-    f(q) = real(tr(M_inverse(1/T,J̃(q),λ)))
+    f(q) = real(tr(M_inverse(T,J̃(q),λ)))
     return 1/(BZextent)^d * BZIntegral(f,d,BZextent;kwargs...) -1
 end
 
@@ -39,7 +39,7 @@ end
 
 function X_q_eig(β::Real,J̃::AbstractMatrix,λ::Real,nb::Integer = getNCell(J̃))
     evals, evecs = eigen(J̃)
-    sum = 0.
+    sum = 0. +0im
     for alpha in eachindex(evals),beta in eachindex(evals),gamma in eachindex(evals)
         sum += (evecs[alpha,beta] *conj(evecs[gamma,beta] ))/(β*evals[beta] + λ)
     end

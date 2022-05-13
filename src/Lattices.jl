@@ -74,6 +74,25 @@ function constructJ(Infos::FourierInfo{B,T},::Val{NCell}) where {B,T,NCell}
     return J_func
 end
 
+# function isInLattice(r::AbstractArray,Basis)
+#     r_lattice = Basis.T *r
+#     for (ib,b) in enumerate(Basis.bLatt)
+#         r_curr =  r_lattice .- b
+#         Intvec = round.(Int,r_curr)
+#         if all(abs2.(Intvec .- r_curr) .<1E-14) # r_lattice contains only Ints
+#             return true
+#         end
+#     end
+#     return false
+# end
+
+# function isInversionSymmetric(B::Basis_Struct)
+#     for b in B.b
+#         !isInLattice(-b,B) && return false
+#     end
+#     return true
+# end
+
 constructJ(Infos::FourierInfo) = constructJ(Infos,Val(maximum(Infos.alpha_vec)))
 
 function constructJtest(Infos::FourierInfo)
