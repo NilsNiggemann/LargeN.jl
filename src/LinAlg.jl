@@ -37,11 +37,11 @@ function BZIntegral(f::Function,d::Integer,BZextent::Real; kwargs...)
     return val
 end
 
-function X_q_eig(β::Real,J̃::AbstractMatrix,λ::Real,nb::Integer = getNCell(J̃))
+function X_q_eig(T::Real,J̃::AbstractMatrix,λ::Real,nb::Integer = getNCell(J̃))
     evals, evecs = eigen(J̃)
     sum = 0. +0im
     for alpha in eachindex(evals),beta in eachindex(evals),gamma in eachindex(evals)
-        sum += (evecs[alpha,beta] *conj(evecs[gamma,beta] ))/(β*evals[beta] + λ)
+        sum += (evecs[alpha,beta] *conj(evecs[gamma,beta] ))/(evals[beta]/T + λ)
     end
     return real(sum/nb)
 end
