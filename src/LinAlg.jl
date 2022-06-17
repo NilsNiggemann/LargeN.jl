@@ -152,17 +152,19 @@ analyzeSpectrum(T,Sys::Geometry,Mod::Module;kwargs...) = analyzeSpectrum(T,Sys,M
 function getChiFunction(T,Sys::Geometry,Basis::Basis_Struct,pairToInequiv::Function;BZextent = 4pi,nk = 20,tol = 1e-6,verbose = true,kwargs...)
     sinfo = analyzeSpectrum(T,Sys,Basis,pairToInequiv;BZextent = BZextent,nk = nk,verbose = verbose)
 
-    JFunc = sinfo[:JFunc]
-    EV = sinfo[:EV]
-    Lam = sinfo[:LamSing]
-    LeftBound = sinfo[:LeftBound]
-    RightBound = sinfo[:RightBound]
+    JFunc = sinfo.JFunc
+    EV = sinfo.EV
+    Lam = sinfo.LamSing
+    LeftBound = sinfo.LeftBound
+    RightBound = sinfo.RightBound
 
     cons = 1E16
     try
-        Lam = optimizeConstraint(EV,T,guess=[LeftBound,RightBound];kwargs...)
+        # Lam = optimizeConstraint(EV,T,guess=[LeftBound,RightBound];kwargs...)
+        Lam = find_zero(sinfo.constraint,[LeftBound,RightBound];kwargs...)
         # Lam = optimizeConstraint(JFunc,T,BZextent,guess=[LamSing+0.1*tol,LamSing+10+T])
         cons = constraint(EV,Lam,T)
+        cons = sinfo.constraint(Lam)
         verbose && @info "constraint minimized to $cons for λ = $Lam"
     catch e
         verbose && @warn "constraint could not be optimized!
