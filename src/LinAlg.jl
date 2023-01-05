@@ -22,13 +22,13 @@ function X_q(T::Real,J̃::AbstractMatrix,λ::Real,nb::Integer = getNCell(J̃))
     real(sum(M_inverse(T,J̃,λ)))/nb
 end
 
-function constraint(J̃::Function,λ::Real,T::Real,BZextent::Real,d::Integer = getDimfromFunc(J̃);kwargs...)
+function constraint_cont(J̃::Function,λ::Real,T::Real,BZextent::Real,d::Integer = getDimfromFunc(J̃);kwargs...)
     f(q) = real(tr(M_inverse(T,J̃(q),λ)))
     return 1/(BZextent)^d * BZIntegral(f,d,BZextent;kwargs...) -1
 end
 
 function optimizeConstraint(J̃::Function,T::Real,BZextent::Real,d::Integer= getDimfromFunc(J̃);min = 2/T+0.01, max=2/T+10,guess = (min,max),method = Roots.Bisection(),kwargs... )
-    f(λ) = constraint(J̃,λ,T,BZextent,d;kwargs...)
+    f(λ) = constraint_cont(J̃,λ,T,BZextent,d;kwargs...)
     find_zero(f,guess,method;atol = 1e-15, rtol = 1e-15,kwargs...)
 end
 
@@ -91,7 +91,7 @@ function ComputeEigvals2D(Jfunc::Function,nk::Integer,ext;min = -ext,max = ext)
     NCell = getNCell(Jfunc)
     eig = Array{T}(undef,NCell,nk,nk)
     for (i,kx) in enumerate(karray), (j,ky) in enumerate(karray)
-        EV =  real.(eigvals(Jfunc(SA[kx,ky])))
+        EV =  eigvals(Jfunc(SA[kx,ky]))
         eig[:,i,j] .= EV
     end
     return eig
@@ -103,8 +103,8 @@ function ComputeEigvals3D(Jfunc::Function,nk::Integer,ext;min = -ext,max = ext)
     NCell = getNCell(Jfunc)
     eig = Array{T}(undef,NCell,nk,nk,nk)
     for (i,kx) in enumerate(karray), (j,ky) in enumerate(karray),(k,kz) in enumerate(karray)
-        EV = real.(eigvals(real.(Jfunc(SA[kx,ky,kz]))))
-        eig[:,i,j,k] .= real(EV)
+        EV = eigvals(Jfunc(SA[kx,ky,kz]))
+        eig[:,i,j,k] .= EV
     end
     return eig
 end
@@ -144,14 +144,14 @@ function analyzeSpectrum(T,Sys::Geometry,Basis::Basis_Struct,pairToInequiv::Func
 
     LeftBound = LamSing
     RightBound = LamSing+10+T
-    return (JFunc = JFunc, EV = EV, LamSing = LamSing, LeftBound = LeftBound, RightBound = RightBound,constraint = x->constraint(EV,x,T))
+    constr = x->constraint(EV,x,T)
+    return (JFunc = JFunc, EV = EV, LamSing = LamSing, LeftBound = LeftBound, RightBound = RightBound,constraint = constr)
 end
 
 analyzeSpectrum(T,Sys::Geometry,Mod::Module;kwargs...) = analyzeSpectrum(T,Sys,Mod.Basis,Mod.pairToInequiv;kwargs...)
 
 function getChiFunction(T,Sys::Geometry,Basis::Basis_Struct,pairToInequiv::Function;BZextent = 4pi,nk = 20,tol = 1e-6,verbose = true,kwargs...)
     sinfo = analyzeSpectrum(T,Sys,Basis,pairToInequiv;BZextent = BZextent,nk = nk,verbose = verbose)
-
     JFunc = sinfo.JFunc
     EV = sinfo.EV
     Lam = sinfo.LamSing
@@ -163,7 +163,6 @@ function getChiFunction(T,Sys::Geometry,Basis::Basis_Struct,pairToInequiv::Funct
         # Lam = optimizeConstraint(EV,T,guess=[LeftBound,RightBound];kwargs...)
         Lam = find_zero(sinfo.constraint,[LeftBound,RightBound];kwargs...)
         # Lam = optimizeConstraint(JFunc,T,BZextent,guess=[LamSing+0.1*tol,LamSing+10+T])
-        cons = constraint(EV,Lam,T)
         cons = sinfo.constraint(Lam)
         verbose && @info "constraint minimized to $cons for λ = $Lam"
     catch e
