@@ -71,6 +71,7 @@ function constructJ(Infos::FourierInfo{B,T},::Val{NCell}) where {B,T,NCell}
         end
         return Hermitian(J)
     end
+    
     return J_func
 end
 

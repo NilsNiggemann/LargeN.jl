@@ -163,7 +163,7 @@ end
 
 analyzeSpectrum(T,Sys::Geometry,Mod::Module;kwargs...) = analyzeSpectrum(T,Sys,Mod.Basis,Mod.pairToInequiv;kwargs...)
 
-function getChiFunction(T,Sys::Geometry,Basis::Basis_Struct,pairToInequiv::Function;BZextent = 4pi,nk = 20,tol = 1e-6,verbose = true,kwargs...)
+function getChiFunction(T::FLType,Sys::Geometry,Basis::Basis_Struct,pairToInequiv::Function;BZextent = 4pi,nk = 20,tol = 1e-6,verbose = true,kwargs...) where FLType <:AbstractFloat
     sinfo = analyzeSpectrum(T,Sys,Basis,pairToInequiv;BZextent = BZextent,nk = nk,verbose = verbose)
     JFunc = sinfo.JFunc
     EV = sinfo.EV
@@ -188,10 +188,11 @@ function getChiFunction(T,Sys::Geometry,Basis::Basis_Struct,pairToInequiv::Funct
         constraint value: $cons \t tolerance: $tol"
     end
     
-
-    @inline chi(q::AbstractVector)= X_q(T,JFunc(q),Lam)
-    @inline chi(qx::Real,qy::Real)= X_q(T,JFunc(SA[qx,qy]),Lam)
-    @inline chi(qx::Real,qy::Real,qz::Real)= X_q(T,JFunc(SA[qx,qy,qz]),Lam)
+    Lam0::FLType = Lam
+    T0::FLType = T
+    @inline chi(q::AbstractVector)= X_q(T0,JFunc(q),Lam0)
+    @inline chi(qx::Real,qy::Real)= X_q(T0,JFunc(SA[qx,qy]),Lam0)
+    @inline chi(qx::Real,qy::Real,qz::Real)= X_q(T0,JFunc(SA[qx,qy,qz]),Lam0)
 
     return chi
 end
