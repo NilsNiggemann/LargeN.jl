@@ -53,22 +53,20 @@ function zeroTweight(J̃::AbstractMatrix)
     weight
 end
 
-function ComputeEig2D(Jfunc::Function,nk::Integer;ext = 2pi,min = -ext,max = ext)
+function ComputeEig2D(Jfunc::Function,nk::Integer,NCell = getNCell(Jfunc);ext = 2pi,min = -ext,max = ext,)
     karray = range(min,max,length = nk)
-    NCell = getNCell(Jfunc)
-    eig = Array{Float64}(undef,NCell,nk,nk)
-    vec = Array{ComplexF64}(undef,NCell,NCell,nk,nk)
+    values = Array{Float64}(undef,NCell,nk,nk)
+    vectors = Array{ComplexF64}(undef,NCell,NCell,nk,nk)
     for (i,kx) in enumerate(karray), (j,ky) in enumerate(karray)
-        sys = eigen(Jfunc(SA[kx,ky,kz]))
-        eig[:,i,j] .= sys.values
-        vec[:,:,i,j] .= sys.vectors
+        sys = LargeN.eigen(Jfunc(SA[kx,ky]))
+        values[:,i,j] .= sys.values
+        vectors[:,:,i,j] .= sys.vectors
     end
-    return eig,vec
+    return (;values,vectors)
 end
 
-function ComputeEig3D(Jfunc::Function,nk::Integer;ext = 2pi,min = -ext,max = ext)
+function ComputeEig3D(Jfunc::Function,nk::Integer,NCell = getNCell(Jfunc);ext = 2pi,min = -ext,max = ext)
     karray = range(min,max,length = nk)
-    NCell = getNCell(Jfunc)
     eig = Array{Float64}(undef,NCell,nk,nk,nk)
     vec = Array{ComplexF64}(undef,NCell,NCell,nk,nk,nk)
     for (i,kx) in enumerate(karray), (j,ky) in enumerate(karray),(k,kz) in enumerate(karray)
@@ -80,8 +78,7 @@ function ComputeEig3D(Jfunc::Function,nk::Integer;ext = 2pi,min = -ext,max = ext
 end
 
 
-function ComputeEigvals2D(Jfunc::Function,nk::Integer,ext;min = -ext,max = ext)
-    T = eltype(Jfunc.Jij_vec)
+function ComputeEigvals2D(Jfunc::Function,nk::Integer,ext::T;min = -ext,max = ext) where T <: AbstractFloat
     karray = range(min,max,length = nk)
     NCell = getNCell(Jfunc)
     eig = Array{T}(undef,NCell,nk,nk)
@@ -99,8 +96,7 @@ function ComputeEigvals2D(Jfunc::Function,nk::Integer,ext;min = -ext,max = ext)
     return eig
 end
 
-function ComputeEigvals3D(Jfunc::Function,nk::Integer,ext;min = -ext,max = ext)
-    T = eltype(Jfunc.Jij_vec)
+function ComputeEigvals3D(Jfunc::Function,nk::Integer,ext::T;min = -ext,max = ext) where T <: AbstractFloat
     karray = range(min,max,length = nk)
     NCell = getNCell(Jfunc)
     eig = Array{T}(undef,NCell,nk,nk,nk)
@@ -136,20 +132,18 @@ function optimizeConstraint(eval::AbstractArray,T::Real;guess =3/T,kwargs...)
     Lambda = find_zero(constr,guess,atol = 1e-15, rtol = 1e-15;kwargs...)
 end
 
-function getEvals(JFunc,BZextent = 4pi;nk = 20)
-    Dim = getDimfromFunc(JFunc)
+function getEvals(JFunc, Dim ,BZextent = 4pi;nk = 20)
     evalFunc = (nothing,ComputeEigvals2D,ComputeEigvals3D)[Dim]
     EV= evalFunc(JFunc,nk,BZextent)
 end
 
-function analyzeSpectrum(T,Sys::Geometry,Basis::Basis_Struct,pairToInequiv::Function;BZextent = 4pi,nk = 20,verbose = true)
-    JFunc = constructJ(Sys,Basis,pairToInequiv)
-    EV = getEvals(JFunc,BZextent,nk = nk)
+function analyzeSpectrum(T,JFunc::Function, NCell = getNCell(JFunc),Dim = getDimfromFunc(JFunc);BZextent = 4pi,nk = 20,verbose = true)
+    EV = getEvals(JFunc,Dim,BZextent,nk = nk)
 
     Emin = minimum(EV)
     degeneracy = length(filter(x -> isapprox(x,Emin,atol = 1e-8),EV))#/length(EV)
     
-    NCell = getNCell(JFunc)
+
     verbose && println("ground state degeneracy: $degeneracy. Degeneracy per unit cell: $(degeneracy*NCell/length(EV))")
 
     LamSing = -Emin/T
@@ -161,10 +155,21 @@ function analyzeSpectrum(T,Sys::Geometry,Basis::Basis_Struct,pairToInequiv::Func
     return (JFunc = JFunc, EV = EV, LamSing = LamSing, LeftBound = LeftBound, RightBound = RightBound,constraint = constr)
 end
 
+function analyzeSpectrum(T,Sys::Geometry,Basis::Basis_Struct,pairToInequiv::Function;kwargs...)
+    JFunc = constructJ(Sys,Basis,pairToInequiv)
+    return analyzeSpectrum(T,JFunc,kwargs...)
+end
+
 analyzeSpectrum(T,Sys::Geometry,Mod::Module;kwargs...) = analyzeSpectrum(T,Sys,Mod.Basis,Mod.pairToInequiv;kwargs...)
 
-function getChiFunction(T::FLType,Sys::Geometry,Basis::Basis_Struct,pairToInequiv::Function;BZextent = 4pi,nk = 20,tol = 1e-6,verbose = true,kwargs...) where FLType <:AbstractFloat
-    sinfo = analyzeSpectrum(T,Sys,Basis,pairToInequiv;BZextent = BZextent,nk = nk,verbose = verbose)
+
+function getChiFunction(T::FLType,Sys::Geometry,Basis::Basis_Struct,pairToInequiv::Function;kwargs...) where FLType <:AbstractFloat
+    JFunc = constructJ(Sys,Basis,pairToInequiv)
+    return getChiFunction(T,JFunc;kwargs...)
+end
+
+function getChiFunction(T::FLType,JFunc::Function,NCell = getNCell(JFunc),Dim = getDimfromFunc(JFunc);BZextent = 4pi,nk = 20,tol = 1e-6,verbose = true,kwargs...) where FLType <:AbstractFloat
+    sinfo = analyzeSpectrum(T,JFunc,NCell,Dim;BZextent = BZextent,nk = nk,verbose = verbose)
     JFunc = sinfo.JFunc
     EV = sinfo.EV
     Lam = sinfo.LamSing
@@ -200,6 +205,11 @@ getChiFunction(T,Sys::Geometry,Mod::Module;kwargs...) = getChiFunction(T,Sys,Mod
 
 function getZeroTChi(Sys::Geometry,Basis::Basis_Struct,pairToInequiv::Function)
     JFunc = constructJ(Sys,Basis,pairToInequiv)
+    chi(x::AbstractVector) = zeroTweight(JFunc(x))
+    chi(x...) = zeroTweight(JFunc(SVector(x)))
+end
+
+function getZeroTChi(JFunc::Function)
     chi(x::AbstractVector) = zeroTweight(JFunc(x))
     chi(x...) = zeroTweight(JFunc(SVector(x)))
 end
