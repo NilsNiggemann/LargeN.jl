@@ -1,7 +1,7 @@
 name = "LargeN"
 uuid = "00c0e18a-d63a-4c8e-bbe6-b34667ceda92"
 authors = ["niggeni <niggeni@zedat.fu-berlin.de>"]
-version = "0.2.0"
+version = "0.2.1"
 
 [deps]
 Cubature = "667455a9-e2ce-5579-9412-b964f529a492"

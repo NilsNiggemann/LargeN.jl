@@ -80,7 +80,9 @@ end
 
 function ComputeEigvals2D(Jfunc::Function,nk::Integer,ext::T;min = -ext,max = ext) where T <: AbstractFloat
     karray = range(min,max,length = nk)
-    NCell = getNCell(Jfunc)
+    k0 = first(karray)
+    NCell = size(Jfunc(SVector(k0,k0)),1)
+
     eig = Array{T}(undef,NCell,nk,nk)
 
     Threads.@threads for i in 1:nk
@@ -98,7 +100,8 @@ end
 
 function ComputeEigvals3D(Jfunc::Function,nk::Integer,ext::T;min = -ext,max = ext) where T <: AbstractFloat
     karray = range(min,max,length = nk)
-    NCell = getNCell(Jfunc)
+    k0 = first(karray)
+    NCell = size(Jfunc(SVector(k0,k0,k0)),1)
     eig = Array{T}(undef,NCell,nk,nk,nk)
 
     Threads.@threads for i in 1:nk
