@@ -6,7 +6,7 @@ function test_Couplings2D(Jfunc,digits=14)
     for qx in qrange, qy in qrange
         J = Jfunc(SA[qx,qy])
         !isApproxHermitian(J,digits) && (hermitianfailed +=1)
-        any(isan.(J)) && (nanfailed +=1)
+        any(isnan.(J)) && (nanfailed +=1)
     end
     @testset "hermiticity" begin
         @test hermitianfailed == 0
